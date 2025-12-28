@@ -3,14 +3,14 @@ library(rvest)
 library(wehoop)
 
 
-#Read in 2025 Advanced School Stats for NCAAW from basketball reference
-school_advanced_url <- paste0("https://www.sports-reference.com/cbb/seasons/women/2025-advanced-school-stats.html")
+#Read in 2025-26 Advanced School Stats for NCAAW from basketball reference
+school_advanced_url <- paste0("https://www.sports-reference.com/cbb/seasons/women/2026-advanced-school-stats.html")
 school_advanced_html <- read_html(school_advanced_url)
 school_advanced_tables <- html_table(school_advanced_html)
 school_advanced_off <- school_advanced_tables[[1]]
 
-#Read in 2025 Advanced Opponent School Stats for NCAAW from basketball reference
-opp_advanced_url <- paste0("https://www.sports-reference.com/cbb/seasons/women/2025-advanced-opponent-stats.html")
+#Read in 2025-26 Advanced Opponent School Stats for NCAAW from basketball reference
+opp_advanced_url <- paste0("https://www.sports-reference.com/cbb/seasons/women/2026-advanced-opponent-stats.html")
 opp_advanced_html <- read_html(opp_advanced_url)
 opp_advanced_tables <- html_table(opp_advanced_html)
 school_advanced_def <- opp_advanced_tables[[1]]
@@ -24,6 +24,7 @@ colnames(school_advanced_def) <- school_advanced_def[c(1),]
 colnames(school_advanced_off)[c(6, 10:11, 13:14, 16:17, 19:20, 22:34)] <- c("win_per", "conf_W", "conf_L", "home_W", "home_L", "away_W", "away_L", "points_for", "points_against", "pace", "off_rtg", "FT_rate", "rate_3", "TS_per", "TRB_rate", "AST_per", "STL_per", "BLK_per", "EFG_per", "TO_rate", "ORB_rate", "FTM_per_FGA")
 
 colnames(school_advanced_def)[c(6, 10:11, 13:14, 16:17, 19:20, 22:34)] <- c("win_per", "conf_W", "conf_L", "home_W", "home_L", "away_W", "away_L", "points_for", "points_against", "pace", "def_rtg", "def_FT_rate", "def_rate_3", "def_TS_per", "opp_TRB_rate", "opp_AST_per", "opp_STL_per", "opp_BLK_per", "def_EFG_per", "def_TO_rate", "opp_ORB_rate", "def_FTM_per_FGA")
+
 
 #Remove empty columns from advanced stats (basketball reference)
 school_advanced_off <- school_advanced_off |> select(-matches("^NA$"))
@@ -362,24 +363,6 @@ all_jumpers_def <- left_join(jump_shots_def, short_mid_def, by = "School") |>
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # play types
 # read in isolation plays for offenses
 isos_off_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 - Isolation - Team Offensive.csv", skip = 1)
@@ -670,9 +653,9 @@ teams_select <- teams_raw |>
     display_name, 
     color, 
     alternate_color,
-    logo
+    logo,
+    team
   )
-
 
 # add Mercyhurst and West Georgia, which weren't originally included
 teams <- teams_select |>
@@ -681,14 +664,16 @@ teams <- teams_select |>
     display_name = "Mercyhurst Lakers",
     color = "07594D",
     alternate_color = "182752",
-    logo = "https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/2385.png&h=200&w=200"
+    logo = "https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/2385.png&h=200&w=200",
+    team = "Mercyhurst"
   ) |>
   add_row(
     abbreviation = "WGA",
     display_name = "West Georgia Wolves",
     color = "0656A5",
     alternate_color = "DA2128",
-    logo = "https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/2698.png&h=200&w=200"
+    logo = "https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/2698.png&h=200&w=200",
+     team = "West Georgia"
   ) |> 
   arrange(
     display_name
@@ -736,6 +721,11 @@ teams <- teams |>
       abbreviation == "MCN", 
       "McNeese State Cowgirls",
       display_name
+    ),
+    team = ifelse(
+      abbreviation == "MCN",
+      "McNeese State",
+      team
     )
   )
 
@@ -746,13 +736,13 @@ teams <- teams |>
       abbreviation == "SEA", 
       "Seattle Redhawks",
       display_name
+    ),
+    team = ifelse(
+      abbreviation == "SEA",
+      "Seattle",
+      team
     )
   )
-
-teams |> filter(grepl("Lady", display_name)) |> print(n=21)
-
-pnr_off |> filter(grepl("Lady", School)) |> arrange(School)
-
 
 # define differences in team names between Synergy and ESPN
 team_aliases <- tribble(
@@ -836,20 +826,6 @@ team_aliases <- tribble(
   "Virginia Commonwealth Rams",                  "VCU Rams"
 )
 
-
-pnr_def_clean <- pnr_def |>
-  left_join(team_aliases, by = c("School" = "synergy_name")) |>
-  mutate(School = coalesce(espn_name, School)) |>
-  select(-espn_name)
-
-pnr_def_clean
-
-view(pnr_def_clean |> select(School) |> arrange(School))
-view(teams |> select(display_name) |> arrange(display_name))
-
-
-pnr_def_clean |> select(School) |> arrange(School) == teams |> select(display_name) |> arrange(display_name)
-
 # combine all stats found from Synergy
 # on offense
 synergy_stats_off <- left_join(at_rim_off, runners_off, by = "School") |> 
@@ -860,10 +836,7 @@ synergy_stats_off <- left_join(at_rim_off, runners_off, by = "School") |>
   left_join(hand_offs_off, by = "School") |> 
   left_join(spot_up_off, by = "School") |> 
   left_join(trans_off, by = "School") |> 
-  left_join(pnr_off, by = "School") #|> 
-  mutate(
-    side = "Offense"
-  )
+  left_join(pnr_off, by = "School")
   
 # on defense
 synergy_stats_def <- left_join(at_rim_def, runners_def, by = "School") |> 
@@ -874,12 +847,84 @@ synergy_stats_def <- left_join(at_rim_def, runners_def, by = "School") |>
   left_join(hand_offs_def, by = "School") |> 
   left_join(spot_up_def, by = "School") |> 
   left_join(trans_def, by = "School") |> 
-  left_join(pnr_def, by = "School") #|> 
-mutate(
-  side = "Defense"
-)
+  left_join(pnr_def, by = "School")
 
 # now combine offense and defense together
 synergy_stats <- left_join(synergy_stats_off, synergy_stats_def, by = c("School"))
 
-view(synergy_stats)
+# combine synergy stats with the team identifying stats from ESPN, using team names from ESPN
+synergy_clean_names <- synergy_stats |>
+  left_join(team_aliases, by = c("School" = "synergy_name")) |>
+  mutate(School = coalesce(espn_name, School)) |>
+  select(-espn_name)
+
+stats_without_sports_ref <- synergy_clean_names |> 
+  left_join(teams, by = c("School" = "display_name"))
+
+
+# clean advanced stats from sports reference to have the same team names as on espn
+# remove instances where "NCAA" was added to some team names
+advanced_stats_off <- advanced_stats_off |> 
+  mutate(
+    School = str_remove_all(School, "\\s*NCAA\\s*$")
+  )
+
+advanced_stats_def <- advanced_stats_def |> 
+  mutate(
+    School = str_remove_all(School, "\\s*NCAA\\s*$")
+  )
+
+# define differences in team names between Sport Reference and ESPN
+team_aliases_sports_ref <- tribble(
+  ~sports_ref_name,                      ~espn_name,
+     "Appalachian State",                    "App State",
+     "Brigham Young",                        "BYU",
+     "Connecticut",                          "UConn",
+     "Miami (FL)",                           "Miami",
+     "Southern Mississippi",                 "Southern Miss",
+     "Saint Mary's (CA)",                    "Saint Mary's",
+     "St. John's (NY)",                      "St. John's",
+     "Saint Francis (PA)",                   "Saint Francis",
+     "Loyola (IL)",                          "Loyola Chicago",
+     "Loyola (MD)",                          "Loyola Maryland",
+     "Illinois-Chicago",                     "UIC",
+     "Massachusetts-Lowell",                 "UMass Lowell",
+     "Maryland-Baltimore County",            "UMBC",
+     "Tennessee-Martin",                     "UT Martin",
+     "Texas-Rio Grande Valley",              "UT Rio Grande Valley",
+     "Louisiana-Monroe",                     "UL Monroe",
+     "Southeastern Louisiana",               "SE Louisiana",
+     "Southern California",                  "USC",
+     "Hawaii",                               "Hawai'i",
+     "San Jose State",                       "San José State",
+     "Queens (NC)",                          "Queens University",
+     "IU Indy",                              "IU Indianapolis",
+     "St. Thomas",                           "St. Thomas-Minnesota",
+     "Prairie View",                         "Prairie View A&M",
+     "FDU",                                  "Fairleigh Dickinson",
+     "Albany (NY)",                          "UAlbany",
+     "American",                             "American University",
+     "Central Connecticut State",            "Central Connecticut",
+     "College of Charleston",                "Charleston",
+     "Louisiana State",                      "LSU",
+     "Maryland-Eastern Shore",               "Maryland Eastern Shore",
+     "Mississippi",                          "Ole Miss",
+     "Nevada-Las Vegas",                     "UNLV",
+     "Nicholls State",                       "Nicholls",
+     "Southern Methodist",                   "SMU",
+     "Virginia Commonwealth",                "VCU"
+)
+
+# combine offensive and defensive advanced stats from sports reference
+advanced_stats <- left_join(advanced_stats_off, advanced_stats_def, by = c("School"))
+
+# change names of advanced stats so team names match those stored in team variables of teams and stats_without_sports_ref data sets
+advanced_stats_clean <- advanced_stats |>
+  left_join(team_aliases_sports_ref, by = c("School" = "sports_ref_name")) |>
+  mutate(School = coalesce(espn_name, School)) |>
+  select(-espn_name)
+
+# combine all into one data set
+matchup_stats_wide <- stats_without_sports_ref |> 
+  left_join(advanced_stats_clean, by = c("team" = "School"))
+
