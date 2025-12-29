@@ -982,7 +982,7 @@ matchup_stats_wide <- stats_without_sports_ref |>
 lowerbetter <- c("l",
                  "def_rtg", 
                  "TO_rate",
-                 "tm_long_mid_freq",
+                 # "tm_long_mid_freq",
                  "def_EFG_per",
                  "def_FT_rate", 
                  #"opp_pace",
@@ -992,9 +992,9 @@ lowerbetter <- c("l",
                  "opp_long_mid_FG_per",
                  "opp_runner_FG_per",
                  "opp_hook_FG_per",
-                 "opp_rim_freq",
-                 "opp_short_mid_freq",
-                 "opp_three_freq",
+                 # "opp_rim_freq",
+                 # "opp_short_mid_freq",
+                 # "opp_three_freq",
                  "opp_iso_PPP", 
                  "opp_ho_PPP", 
                  "opp_pnr_PPP", 
@@ -1284,7 +1284,8 @@ p <- p |>
     columns = starts_with("rank_"),
     rows = name_1 %in% c(
       "Isolations", "Handoffs", "Pick and Rolls", "Spot Ups", 
-      "Postups", "Transitions", "Cuts", "Post Ups", "Pace"
+      "Postups", "Transitions", "Cuts", "Post Ups", "Pace",
+      "Rim Rate", "Short Mid. Rate", "Long Mid. Rate", "Three-Point Rate", "Runner Rate", "Hook Shot Rate"
     ),
     alpha = 1,
     reverse = T,
@@ -1500,7 +1501,8 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
       columns = starts_with("rank_"),
       rows = name_1 %in% c(
         "Isolations", "Handoffs", "Pick and Rolls", "Spot Ups", 
-        "Postups", "Transitions", "Cuts", "Post Ups", "Pace"
+        "Postups", "Transitions", "Cuts", "Post Ups", "Pace",
+        "Rim Rate", "Short Mid. Rate", "Long Mid. Rate", "Three-Point Rate", "Runner Rate", "Hook Shot Rate"
       ),
       alpha = 1,
       reverse = T,
@@ -1557,5 +1559,8 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
   
   p
 }
+
+
+create_matchup_table(offense_team_abbr = "NCSU", defense_team_abbr = "STAN")
 
 create_matchup_table(offense_team_abbr = "STAN", defense_team_abbr = "NCSU")
