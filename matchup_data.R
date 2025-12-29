@@ -76,46 +76,46 @@ advanced_stats_def <- school_advanced_def |>
 # now read in shot type and play type stats from Synergy
 # shot types
 # read in at rim shots for offenses
-rim_off_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - At Rim - Team Offensive.csv", skip = 1)
+rim_off_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - At Rim - Team Offensive.csv", skip = 1)
 
 # read in at rim shots for defenses
-rim_def_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - At Rim - Team Defensive.csv", skip = 1)
+rim_def_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - At Rim - Team Defensive.csv", skip = 1)
 
 # read in runners on offense
-runners_off_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - Runner - Team Offensive.csv", skip = 1)
+runners_off_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Runner - Team Offensive.csv", skip = 1)
 
 # read in runners on defense
-runners_def_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - Runner - Team Defensive.csv", skip = 1)
+runners_def_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Runner - Team Defensive.csv", skip = 1)
 
 # read in hook shots on offense
-hook_off_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - Hook - Team Offensive.csv", skip = 1)
+hook_off_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Hook - Team Offensive.csv", skip = 1)
 
 # read in hook shots on defense
-hook_def_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - Hook - Team Defensive.csv", skip = 1)
+hook_def_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Hook - Team Defensive.csv", skip = 1)
 
 # read in all jump shots on offense
-jump_shots_off_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - Jump Shots - Team Offensive.csv", skip = 1)
+jump_shots_off_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Jump Shots - Team Offensive.csv", skip = 1)
 
 # read in all jump shots on defense
-jump_shots_def_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - Jump Shots - Team Defensive.csv", skip = 1)
+jump_shots_def_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Jump Shots - Team Defensive.csv", skip = 1)
 
 # read in short mid-range shots on offense
-short_mid_off_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - Short Mid-Range - Team Offensive.csv", skip = 1)
+short_mid_off_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Short (_17') - Team Offensive.csv", skip = 1)
 
 # read in short mid-range shots on defense
-short_mid_def_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - Short Mid-Range - Team Defensive.csv", skip = 1)
+short_mid_def_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Short (_17') - Team Defensive.csv", skip = 1)
 
 # read in long mid-range shots on offense
-long_mid_off_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - Long Mid-Range - Team Offensive.csv", skip = 1)
+long_mid_off_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Medium (17' to _3 point line) - Team Offensive.csv", skip = 1)
 
 # read in long mid-range shots on defense
-long_mid_def_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - Long Mid-Range - Team Defensive.csv", skip = 1)
+long_mid_def_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Medium (17' to _3 point line) - Team Defensive.csv", skip = 1)
 
 # read in 3 pointers on offense
-threes_off_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - 3 Pointers - Team Offensive.csv", skip = 1)
+threes_off_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Long (3 point jump shots) - Team Offensive.csv", skip = 1)
 
 # read in 3 pointers on defense
-threes_def_raw <- read_csv("Synergy Data/Shot Types/College Women 2025-2026 - 3 Pointers - Team Defensive.csv", skip = 1)
+threes_def_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Long (3 point jump shots) - Team Defensive.csv", skip = 1)
 
 # manipulate at rim shots on offense to only get variables we want in the format we want
 rim_off <- rim_off_raw |> 
@@ -369,52 +369,52 @@ all_jumpers_def <- left_join(jump_shots_def, short_mid_def, by = "School") |>
 
 # play types
 # read in isolation plays for offenses
-isos_off_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 - Isolation - Team Offensive.csv", skip = 1)
+isos_off_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Isolation - Team Offensive.csv", skip = 1)
 
 # read in isolation plays for defenses
-isos_def_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 - Isolation - Team Defensive.csv", skip = 1)
+isos_def_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Isolation - Team Defensive.csv", skip = 1)
 
 # read in cuts on offense
-cuts_off_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 All excluding Exhibitions - Cut - Team Offensive.csv", skip = 1)
+cuts_off_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Cut - Team Offensive.csv", skip = 1)
 
 # read in cuts on defense
-cuts_def_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 All excluding Exhibitions - Cut - Team Defensive.csv", skip = 1)
+cuts_def_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Cut - Team Defensive.csv", skip = 1)
 
 # read in hand offs for offense
-hand_off_off_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 All excluding Exhibitions - Hand Off - Team Offensive.csv", skip = 1)
+hand_off_off_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Hand Off - Team Offensive.csv", skip = 1)
 
 # read in hand offs for defense
-hand_off_def_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 All excluding Exhibitions - Hand Off - Team Defensive.csv", skip = 1)
+hand_off_def_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Hand Off - Team Defensive.csv", skip = 1)
 
 # read in pick and roll ball handler for offense
-pnr_ball_off_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 All excluding Exhibitions - P&R Ball Handler - Team Offensive.csv", skip = 1)
+pnr_ball_off_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - P&R Ball Handler - Team Offensive.csv", skip = 1)
 
 # read in pick and roll ball handler for defense
-pnr_ball_def_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 All excluding Exhibitions - P&R Ball Handler - Team Defensive.csv", skip = 1)
+pnr_ball_def_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - P&R Ball Handler - Team Defensive.csv", skip = 1)
 
 # read in pick a roll roll man for offense
-pnr_roll_off_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 All excluding Exhibitions - P&R Roll Man - Team Offensive.csv", skip = 1)
+pnr_roll_off_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - P&R Roll Man - Team Offensive.csv", skip = 1)
 
 # read in pick a roll roll man for  defense
-pnr_roll_def_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 All excluding Exhibitions - P&R Roll Man - Team Defensive.csv", skip = 1)
+pnr_roll_def_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - P&R Roll Man - Team Defensive.csv", skip = 1)
 
 # read in spot up plays for offense
-spot_up_off_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 All excluding Exhibitions - Spot Up - Team Offensive.csv", skip = 1)
+spot_up_off_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Spot Up - Team Offensive.csv", skip = 1)
 
 # read in spot up plays for defense
-spot_up_def_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 All excluding Exhibitions - Spot Up - Team Defensive.csv", skip = 1)
+spot_up_def_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Spot Up - Team Defensive.csv", skip = 1)
 
 # read in transition plays for offense
-trans_off_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 All excluding Exhibitions - Transition - Team Offensive.csv", skip = 1)
+trans_off_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Transition - Team Offensive.csv", skip = 1)
 
 # read in transition plays for defense
-trans_def_raw <- read_csv("Synergy Data/Play Types/College Women 2025-2026 All excluding Exhibitions - Transition - Team Defensive.csv", skip = 1)
+trans_def_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Transition - Team Defensive.csv", skip = 1)
 
 # read in post up plays for offense
-post_up_off_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Post-Ups - Team Offensive.csv", skip = 1)
+post_up_off_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Post-Up - Team Offensive.csv", skip = 1)
 
 # read in post up plays for defense
-post_up_def_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Post-Ups - Team Defensive.csv", skip = 1)
+post_up_def_raw <- read_csv("Synergy Data/Play Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Post-Up - Team Defensive.csv", skip = 1)
 
 
 # manipulate isolation plays on offense to only get variables we want in the format we want
@@ -1560,7 +1560,12 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
   p
 }
 
+# create matchup tables for NC State vs. Stanford
+ncsu_o_vs_stan_d <- create_matchup_table(offense_team_abbr = "NCSU", defense_team_abbr = "STAN")
 
-create_matchup_table(offense_team_abbr = "NCSU", defense_team_abbr = "STAN")
+stan_o_vs_ncsu_d <- create_matchup_table(offense_team_abbr = "STAN", defense_team_abbr = "NCSU")
 
-create_matchup_table(offense_team_abbr = "STAN", defense_team_abbr = "NCSU")
+
+# save the matchup tables as html files
+gtsave(ncsu_o_vs_stan_d, filename = "ncsu_o_vs_stan_d.html")
+gtsave(stan_o_vs_ncsu_d, filename = "stan_o_vs_ncsu_d.html")
