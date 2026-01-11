@@ -1561,14 +1561,14 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
 }
 
 # create matchup tables for NC State vs. Stanford
-ncsu_o_vs_cal_d <- create_matchup_table(offense_team_abbr = "NCSU", defense_team_abbr = "CAL")
+ncsu_o_vs_smu_d <- create_matchup_table(offense_team_abbr = "NCSU", defense_team_abbr = "SMU")
 
-cal_o_vs_ncsu_d <- create_matchup_table(offense_team_abbr = "CAL", defense_team_abbr = "NCSU")
+smu_o_vs_ncsu_d <- create_matchup_table(offense_team_abbr = "SMU", defense_team_abbr = "NCSU")
 
-ncsu_o_vs_cal_d
+ncsu_o_vs_smu_d
 
-cal_o_vs_ncsu_d
+smu_o_vs_ncsu_d
 
 # save the matchup tables as html files
-gtsave(ncsu_o_vs_stan_d, filename = "ncsu_o_vs_stan_d.html")
-gtsave(stan_o_vs_ncsu_d, filename = "stan_o_vs_ncsu_d.html")
+#gtsave(ncsu_o_vs_stan_d, filename = "ncsu_o_vs_stan_d.html")
+#gtsave(stan_o_vs_ncsu_d, filename = "stan_o_vs_ncsu_d.html")
