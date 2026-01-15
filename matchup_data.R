@@ -8,33 +8,44 @@ library(gtUtils) # for making tables better
 library(gtExtras) # for making tables better
 
 
-#Read in 2025-26 Advanced School Stats for NCAAW from basketball reference
+# read in 2025-26 Advanced School Stats for NCAAW from basketball reference
 school_advanced_url <- paste0("https://www.sports-reference.com/cbb/seasons/women/2026-advanced-school-stats.html")
 school_advanced_html <- read_html(school_advanced_url)
 school_advanced_tables <- html_table(school_advanced_html)
 school_advanced_off <- school_advanced_tables[[1]]
 
-#Read in 2025-26 Advanced Opponent School Stats for NCAAW from basketball reference
+# read in 2025-26 Advanced Opponent School Stats for NCAAW from basketball reference
 opp_advanced_url <- paste0("https://www.sports-reference.com/cbb/seasons/women/2026-advanced-opponent-stats.html")
 opp_advanced_html <- read_html(opp_advanced_url)
 opp_advanced_tables <- html_table(opp_advanced_html)
 school_advanced_def <- opp_advanced_tables[[1]]
 
-#Change columns names to the data in row 1
+# read in 2025-26 School Rating for NCAAW from basketball reference (to use the ADJUSTED offensive, defensive, net ratings)
+school_ratings_url <- paste0("https://www.sports-reference.com/cbb/seasons/women/2026-ratings.html")
+school_ratings_html <- read_html(school_ratings_url)
+school_rating_tables <- html_table(school_ratings_html)
+school_ratings <- school_rating_tables[[1]]
+
+# change columns names to the data in row 1
 colnames(school_advanced_off) <- school_advanced_off[c(1),]
 
 colnames(school_advanced_def) <- school_advanced_def[c(1),]
 
-#Change certain column names so they syntactically work
-colnames(school_advanced_off)[c(6, 10:11, 13:14, 16:17, 19:20, 22:34)] <- c("win_per", "conf_W", "conf_L", "home_W", "home_L", "away_W", "away_L", "points_for", "points_against", "tm_pace", "off_rtg", "FT_rate", "rate_3", "TS_per", "TRB_rate", "AST_per", "STL_per", "BLK_per", "EFG_per", "TO_rate", "ORB_rate", "FTM_per_FGA")
+colnames(school_ratings) <- school_ratings[c(1),]
 
-colnames(school_advanced_def)[c(6, 10:11, 13:14, 16:17, 19:20, 22:34)] <- c("win_per", "conf_W", "conf_L", "home_W", "home_L", "away_W", "away_L", "points_for", "points_against", "opp_pace", "def_rtg", "def_FT_rate", "def_rate_3", "def_TS_per", "opp_TRB_rate", "opp_AST_per", "opp_STL_per", "opp_BLK_per", "def_EFG_per", "def_TO_rate", "opp_ORB_rate", "def_FTM_per_FGA")
+# change certain column names so they syntactically work
+colnames(school_advanced_off)[c(6, 10:11, 13:14, 16:17, 19:20, 22:34)] <- c("win_per", "conf_W", "conf_L", "home_W", "home_L", "away_W", "away_L", "points_for", "points_against", "tm_pace", "off_rtg_raw", "FT_rate", "rate_3", "TS_per", "TRB_rate", "AST_per", "STL_per", "BLK_per", "EFG_per", "TO_rate", "ORB_rate", "FTM_per_FGA")
 
+colnames(school_advanced_def)[c(6, 10:11, 13:14, 16:17, 19:20, 22:34)] <- c("win_per", "conf_W", "conf_L", "home_W", "home_L", "away_W", "away_L", "points_for", "points_against", "opp_pace", "def_rtg_raw", "def_FT_rate", "def_rate_3", "def_TS_per", "opp_TRB_rate", "opp_AST_per", "opp_STL_per", "opp_BLK_per", "def_EFG_per", "def_TO_rate", "opp_ORB_rate", "def_FTM_per_FGA")
+
+colnames(school_ratings)[c(5, 17:19)] <- c("ap_ranking", "off_rtg_adj", "def_rtg_adj", "net_rtg_adj")
 
 #Remove empty columns from advanced stats (basketball reference)
 school_advanced_off <- school_advanced_off |> select(-matches("^NA$"))
 
 school_advanced_def <- school_advanced_def |> select(-matches("^NA$"))
+
+school_ratings <- school_ratings |> select(-matches("^NA$"))
 
 #Now remove rows that are just the variable names
 school_advanced_off <- school_advanced_off |> filter(Rk != "Rk")
@@ -45,31 +56,42 @@ school_advanced_def <- school_advanced_def |> filter(Rk != "Rk")
 school_advanced_def <- school_advanced_def |> filter(Rk != 0)
 school_advanced_def <- school_advanced_def |> filter(G != "Overall")
 
+school_ratings <- school_ratings |> filter(Rk != "Rk")
+school_ratings <- school_ratings |> filter(Rk != 0)
+school_ratings <- school_ratings |> filter(SRS != "SRS")
+
 #All variables started as character, so change variables to numeric where necessary
 school_advanced_off <- school_advanced_off |> mutate(across(c(1, 3:29), as.numeric))
 
 school_advanced_def <- school_advanced_def |> mutate(across(c(1, 3:29), as.numeric))
+
+school_ratings <- school_ratings |> mutate(across(c(1, 4:16), as.numeric))
 
 #Replace NA values with 0s in school stats and advanced (basketball reference)
 school_advanced_off <- school_advanced_off |> mutate(across(where(is.numeric), ~replace_na(., 0)))
 
 school_advanced_def <- school_advanced_def |> mutate(across(where(is.numeric), ~replace_na(., 0)))
 
+school_ratings <- school_ratings |> mutate(across(where(is.numeric), ~replace_na(., 0)))
 
+
+# adjust variables as needed and select only the variables we want to use
 advanced_stats_off <- school_advanced_off |> 
   mutate(
     ORB_rate = ORB_rate/100,
     TO_rate = TO_rate/100
   ) |> 
-  dplyr::select(School, W, L, tm_pace, off_rtg, EFG_per, TO_rate, ORB_rate, FT_rate)
+  dplyr::select(School, W, L, tm_pace, EFG_per, TO_rate, ORB_rate, FT_rate)
 
 advanced_stats_def <- school_advanced_def |> 
   mutate(
     DRB_rate = (100 - opp_ORB_rate)/100,
     def_TO_rate = def_TO_rate/100
   ) |> 
-  dplyr::select(School, W, L, opp_pace, def_rtg, def_EFG_per, def_TO_rate, DRB_rate, def_FT_rate)
+  dplyr::select(School, W, L, opp_pace, def_EFG_per, def_TO_rate, DRB_rate, def_FT_rate)
 
+school_ratings <- school_ratings |> 
+  dplyr::select(School, W, L, off_rtg_adj, def_rtg_adj, net_rtg_adj)
 
 
 
@@ -683,7 +705,7 @@ pnr_def <- left_join(pnr_ball_def, pnr_roll_def, by = "School") |>
     opp_pnr_PPP
   )
 
-# read in team data using the wehoop package. This will give use the team names seen on ESPN and team logos
+# read in team data using the wehoop package. This will give us the team names seen on ESPN and team logos
 teams_raw <- wehoop::espn_wbb_teams()
 
 # select only the variables we want for the teams data set
@@ -961,13 +983,16 @@ team_aliases_sports_ref <- tribble(
 advanced_stats <- left_join(advanced_stats_off, advanced_stats_def, by = c("School", "W", "L"))
 
 # create net rating variable in advanced stats data
-advanced_stats <- advanced_stats |> 
-  mutate(
-    net_rtg = off_rtg - def_rtg
-  )
+# advanced_stats <- advanced_stats |> 
+#   mutate(
+#     net_rtg_raw = off_rtg_raw - def_rtg_raw
+#   )
+
+# combine advanced stats with rating stats from sports reference
+advanced_stats_with_ratings <- left_join(advanced_stats, school_ratings, by = c("School", "W", "L"))
 
 # change names of advanced stats so team names match those stored in team variables of teams and stats_without_sports_ref data sets
-advanced_stats_clean <- advanced_stats |>
+advanced_stats_clean <- advanced_stats_with_ratings |>
   left_join(team_aliases_sports_ref, by = c("School" = "sports_ref_name")) |>
   mutate(School = coalesce(espn_name, School)) |>
   select(-espn_name)
@@ -980,7 +1005,8 @@ matchup_stats_wide <- stats_without_sports_ref |>
 
 # which stats mean lower values are better
 lowerbetter <- c("l",
-                 "def_rtg", 
+                 #"def_rtg_raw",
+                 "def_rtg_adj",
                  "TO_rate",
                  # "tm_long_mid_freq",
                  "def_EFG_per",
@@ -1016,7 +1042,6 @@ lowerbetter <- c("l",
                  )
 
 
-
 # some boring data wrangling
 tmdf <- matchup_stats_wide |> 
   dplyr::select(
@@ -1029,12 +1054,12 @@ tmdf <- matchup_stats_wide |>
   mutate(rank = ifelse(name %in% lowerbetter, rank(value, ties.method = "first"), rank(-value, ties.method = "first"))) |> 
   ungroup() |> 
   # classify stats in offense and defense
-  mutate(side = ifelse(grepl("opp_", name) | name %in% c("def_rtg", "DRB_rate", "def_EFG_per", "def_TO_rate", "def_FT_rate"), "Defense", "Offense"), 
+  mutate(side = ifelse(grepl("opp_", name) | name %in% c("def_rtg_adj", "DRB_rate", "def_EFG_per", "def_TO_rate", "def_FT_rate"), "Defense", "Offense"), 
          side = ifelse(name %in% c("W", "L", "net_rtg", "logo", "team", "color", "alternate_color"), "General", side)) |> 
   # assign groups to each stat category
   mutate(stat_group = case_when(
-    name %in% c("W", "L", "net_rtg") ~ "General",
-    name %in% c("off_rtg", "def_rtg", "EFG_per", "FT_rate", "TO_rate", "ORB_rate", 
+    name %in% c("W", "L", "net_rtg_adj") ~ "General",
+    name %in% c("off_rtg_adj", "def_rtg_adj", "EFG_per", "FT_rate", "TO_rate", "ORB_rate", 
                 "opp_EFG_per", "opp_fta_rate", "opp_tov_per", "opp_oreb_per") ~ "Advanced",
     name %in% c("tm_rim_FG_per", "tm_short_mid_FG_per", "tm_long_mid_FG_per", "tm_three_FG_per", "tm_runner_FG_per", "tm_hook_FG_per",
                 "opp_rim_FG_per", "opp_short_mid_FG_per", "opp_long_mid_FG_per", "opp_three_FG_per", "opp_runner_FG_per", "opp_hook_FG_per") ~ "Accuracy",
@@ -1065,14 +1090,14 @@ emptydf <- data.frame(name = c("Offensive Rating",
                                "Rim Rate", "Short Mid. Rate", "Long Mid. Rate", "Three-Point Rate", "Runner Rate", "Hook Shot Rate", 
                                "Transition", "Isolation", "Pick and Roll", "Spot Up", "Post Up", "Cut",  "Handoff", 
                                "Transitions", "Isolations", "Pick and Rolls", "Spot Ups", "Post Ups", "Cuts", "Handoffs",  "Pace"), 
-                      stat = c("off_rtg", 
+                      stat = c("off_rtg_adj", 
                                "EFG_per", "FT_rate", "TO_rate", "ORB_rate", 
                                  "tm_rim_FG_per", "tm_short_mid_FG_per", "tm_long_mid_FG_per", "tm_three_FG_per", "tm_runner_FG_per", "tm_hook_FG_per",
                                "tm_rim_freq", "tm_short_mid_freq", "tm_long_mid_freq", "tm_three_freq", "tm_runner_freq", "tm_hook_freq",
                                "tm_trans_PPP", "tm_iso_PPP",  "tm_pnr_PPP", "tm_spot_up_PPP", "tm_post_up_PPP", "tm_cut_PPP", "tm_ho_PPP",
                                "tm_trans_freq", "tm_iso_freq",   "tm_pnr_freq",  "tm_spot_up_freq", "tm_post_up_freq", "tm_cut_freq", "tm_ho_freq",
                                "tm_pace", 
-                               "def_rtg", 
+                               "def_rtg_adj", 
                                "def_EFG_per", "def_FT_rate", "def_TO_rate", "DRB_rate", 
                                  "opp_rim_FG_per", "opp_short_mid_FG_per", "opp_long_mid_FG_per",  "opp_three_FG_per", "opp_runner_FG_per", "opp_hook_FG_per",
                                "opp_rim_freq", "opp_short_mid_freq", "opp_long_mid_freq", "opp_three_freq", "opp_runner_freq", "opp_hook_freq",
@@ -1114,7 +1139,6 @@ gt_rank_coloring <- function(gt_table, column = "rank") {
 
 
 
-
 tm1 <- "NCSU"
 tm2 <- "STAN"
 
@@ -1140,7 +1164,7 @@ off_team_nrtg <-  tmdf |>
   filter(stat_group %in% "General") |>
   select(stat, value, rank) |> 
   pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
-  mutate(kpistring = paste0(sprintf("%+.1f", value_net_rtg))) |> 
+  mutate(kpistring = paste0(sprintf("%+.1f", value_net_rtg_adj))) |> 
   pull(kpistring)
 
 # select off team logo for title
@@ -1170,7 +1194,7 @@ def_team_nrtg <-  tmdf |>
   filter(stat_group %in% "General") |>
   select(stat, value, rank) |> 
   pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
-  mutate(kpistring = paste0(sprintf("%+.1f", value_net_rtg))) |> 
+  mutate(kpistring = paste0(sprintf("%+.1f", value_net_rtg_adj))) |> 
   pull(kpistring)
 
 # select def team logo for title
@@ -1367,7 +1391,7 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
     filter(stat_group %in% "General") |>
     select(stat, value, rank) |> 
     pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
-    mutate(kpistring = paste0(sprintf("%+.1f", value_net_rtg))) |> 
+    mutate(kpistring = paste0(sprintf("%+.1f", value_net_rtg_adj))) |> 
     pull(kpistring)
   
   # select off team logo for title
@@ -1397,7 +1421,7 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
     filter(stat_group %in% "General") |>
     select(stat, value, rank) |> 
     pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
-    mutate(kpistring = paste0(sprintf("%+.1f", value_net_rtg))) |> 
+    mutate(kpistring = paste0(sprintf("%+.1f", value_net_rtg_adj))) |> 
     pull(kpistring)
   
   # select def team logo for title
