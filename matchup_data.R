@@ -74,24 +74,24 @@ school_advanced_def <- school_advanced_def |> mutate(across(where(is.numeric), ~
 
 school_ratings <- school_ratings |> mutate(across(where(is.numeric), ~replace_na(., 0)))
 
-
 # adjust variables as needed and select only the variables we want to use
 advanced_stats_off <- school_advanced_off |> 
   mutate(
     ORB_rate = ORB_rate/100,
     TO_rate = TO_rate/100
   ) |> 
-  dplyr::select(School, W, L, tm_pace, EFG_per, TO_rate, ORB_rate, FT_rate)
+  dplyr::select(School, W, L, conf_W, conf_L, tm_pace, EFG_per, TO_rate, ORB_rate, FT_rate)
 
 advanced_stats_def <- school_advanced_def |> 
   mutate(
     DRB_rate = (100 - opp_ORB_rate)/100,
     def_TO_rate = def_TO_rate/100
   ) |> 
-  dplyr::select(School, W, L, opp_pace, def_EFG_per, def_TO_rate, DRB_rate, def_FT_rate)
+  dplyr::select(School, W, L, conf_W, conf_L, opp_pace, def_EFG_per, def_TO_rate, DRB_rate, def_FT_rate)
 
 school_ratings <- school_ratings |> 
   dplyr::select(School, W, L, off_rtg_adj, def_rtg_adj, net_rtg_adj)
+
 
 
 
@@ -980,7 +980,7 @@ team_aliases_sports_ref <- tribble(
 )
 
 # combine offensive and defensive advanced stats from sports reference
-advanced_stats <- left_join(advanced_stats_off, advanced_stats_def, by = c("School", "W", "L"))
+advanced_stats <- left_join(advanced_stats_off, advanced_stats_def, by = c("School", "W", "L", "conf_W", "conf_L"))
 
 # create net rating variable in advanced stats data
 # advanced_stats <- advanced_stats |> 
@@ -1055,10 +1055,10 @@ tmdf <- matchup_stats_wide |>
   ungroup() |> 
   # classify stats in offense and defense
   mutate(side = ifelse(grepl("opp_", name) | name %in% c("def_rtg_adj", "DRB_rate", "def_EFG_per", "def_TO_rate", "def_FT_rate"), "Defense", "Offense"), 
-         side = ifelse(name %in% c("W", "L", "net_rtg", "logo", "team", "color", "alternate_color"), "General", side)) |> 
+         side = ifelse(name %in% c("W", "L", "conf_W", "conf_L", "net_rtg", "logo", "team", "color", "alternate_color"), "General", side)) |> 
   # assign groups to each stat category
   mutate(stat_group = case_when(
-    name %in% c("W", "L", "net_rtg_adj") ~ "General",
+    name %in% c("W", "L", "conf_W", "conf_L", "net_rtg_adj") ~ "General",
     name %in% c("off_rtg_adj", "def_rtg_adj", "EFG_per", "FT_rate", "TO_rate", "ORB_rate", 
                 "opp_EFG_per", "opp_fta_rate", "opp_tov_per", "opp_oreb_per") ~ "Advanced",
     name %in% c("tm_rim_FG_per", "tm_short_mid_FG_per", "tm_long_mid_FG_per", "tm_three_FG_per", "tm_runner_FG_per", "tm_hook_FG_per",
@@ -1158,6 +1158,15 @@ off_team_record <-  tmdf |>
   mutate(kpistring = paste0(value_W, "-", value_L)) |> 
   pull(kpistring)
 
+# select off team conference record for title
+off_team_conf_record <-  tmdf |> 
+  filter(abbreviation == tm1) |> 
+  filter(stat_group %in% "General") |>
+  select(stat, value, rank) |> 
+  pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
+  mutate(kpistring = paste0("(", value_conf_W, "-", value_conf_L, ")")) |> 
+  pull(kpistring)
+
 # select off team net rating for title
 off_team_nrtg <-  tmdf |> 
   filter(abbreviation == tm1) |> 
@@ -1188,6 +1197,16 @@ def_team_record <-  tmdf |>
   mutate(kpistring = paste0(value_W, "-", value_L)) |> 
   pull(kpistring)
 
+# select def team conference record for title
+# have conference records in reverse for defensive teams to make it work for now
+def_team_conf_record <-  tmdf |> 
+  filter(abbreviation == tm2) |> 
+  filter(stat_group %in% "General") |>
+  select(stat, value, rank) |> 
+  pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
+  mutate(kpistring = paste0("(", value_conf_L, "-", value_conf_W, ")")) |> 
+  pull(kpistring)
+
 # select def team net rating for title
 def_team_nrtg <-  tmdf |> 
   filter(abbreviation == tm2) |> 
@@ -1204,7 +1223,7 @@ def_team_logo <- teams |>
 
 # create subtitle
 gt_title <- md(paste0("<img src='", off_team_logo, "' style='height:35px;'>", off_teamname, " vs. ", def_teamname, "<img src='", def_team_logo, " ' style='height:35px;'>"))
-gt_subtitle <- md(paste0(off_team_record, " (", off_team_nrtg, " Net) · ", def_team_record, " (", def_team_nrtg, " Net)"))
+gt_subtitle <- md(paste0(off_team_record, " ", off_team_conf_record, " (", off_team_nrtg, " Net) · ", def_team_record, " ", def_team_conf_record, " (", def_team_nrtg, " Net)"))
 
 # get df ready for gt table
 gt_df <- emptydf |> 
@@ -1385,6 +1404,15 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
     mutate(kpistring = paste0(value_W, "-", value_L)) |> 
     pull(kpistring)
   
+  # select off team conference record for title
+  off_team_conf_record <-  tmdf |> 
+    filter(abbreviation == tm1) |> 
+    filter(stat_group %in% "General") |>
+    select(stat, value, rank) |> 
+    pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
+    mutate(kpistring = paste0("(", value_conf_W, "-", value_conf_L, ")")) |> 
+    pull(kpistring)
+  
   # select off team net rating for title
   off_team_nrtg <-  tmdf |> 
     filter(abbreviation == offense_team_abbr) |> 
@@ -1415,6 +1443,16 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
     mutate(kpistring = paste0(value_W, "-", value_L)) |> 
     pull(kpistring)
   
+  # select def team conference record for title
+  # have conference records in reverse for defensive teams to make it work for now
+  def_team_conf_record <-  tmdf |> 
+    filter(abbreviation == tm2) |> 
+    filter(stat_group %in% "General") |>
+    select(stat, value, rank) |> 
+    pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
+    mutate(kpistring = paste0("(", value_conf_L, "-", value_conf_W, ")")) |> 
+    pull(kpistring)
+  
   # select def team net rating for title
   def_team_nrtg <-  tmdf |> 
     filter(abbreviation == defense_team_abbr) |> 
@@ -1431,7 +1469,7 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
   
   # create subtitle
   gt_title <- md(paste0("<img src='", off_team_logo, "' style='height:35px;'>", off_teamname, " vs. ", def_teamname, "<img src='", def_team_logo, " ' style='height:35px;'>"))
-  gt_subtitle <- md(paste0(off_team_record, " (", off_team_nrtg, " Net) · ", def_team_record, " (", def_team_nrtg, " Net)"))
+  gt_subtitle <- md(paste0(off_team_record, " ", off_team_conf_record, " (", off_team_nrtg, " Net) · ", def_team_record, " ", def_team_conf_record, " (", def_team_nrtg, " Net)"))
   
   # get df ready for gt table
   gt_df <- emptydf |> 
@@ -1584,14 +1622,14 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
   p
 }
 
-# create matchup tables for NC State vs. Stanford
-ncsu_o_vs_smu_d <- create_matchup_table(offense_team_abbr = "NCSU", defense_team_abbr = "SMU")
+# create matchup tables for NC State vs. Syracuse
+ncsu_o_vs_syracuse_d <- create_matchup_table(offense_team_abbr = "NCSU", defense_team_abbr = "SYR")
 
-smu_o_vs_ncsu_d <- create_matchup_table(offense_team_abbr = "SMU", defense_team_abbr = "NCSU")
+syracuse_o_vs_ncsu_d <- create_matchup_table(offense_team_abbr = "SYR", defense_team_abbr = "NCSU")
 
-ncsu_o_vs_smu_d
+ncsu_o_vs_syracuse_d
 
-smu_o_vs_ncsu_d
+syracuse_o_vs_ncsu_d
 
 # save the matchup tables as html files
 #gtsave(ncsu_o_vs_stan_d, filename = "ncsu_o_vs_stan_d.html")
