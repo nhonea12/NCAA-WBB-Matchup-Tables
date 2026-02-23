@@ -1406,7 +1406,7 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
   
   # select off team conference record for title
   off_team_conf_record <-  tmdf |> 
-    filter(abbreviation == tm1) |> 
+    filter(abbreviation == offense_team_abbr) |> 
     filter(stat_group %in% "General") |>
     select(stat, value, rank) |> 
     pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
@@ -1444,13 +1444,12 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
     pull(kpistring)
   
   # select def team conference record for title
-  # have conference records in reverse for defensive teams to make it work for now
   def_team_conf_record <-  tmdf |> 
-    filter(abbreviation == tm2) |> 
+    filter(abbreviation == defense_team_abbr) |> 
     filter(stat_group %in% "General") |>
     select(stat, value, rank) |> 
     pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
-    mutate(kpistring = paste0("(", value_conf_L, "-", value_conf_W, ")")) |> 
+    mutate(kpistring = paste0("(", value_conf_W, "-", value_conf_L, ")")) |> 
     pull(kpistring)
   
   # select def team net rating for title
@@ -1622,14 +1621,13 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
   p
 }
 
-# create matchup tables for NC State vs. Syracuse
-ncsu_o_vs_syracuse_d <- create_matchup_table(offense_team_abbr = "NCSU", defense_team_abbr = "SYR")
+# create matchup tables for NC State vs. UNC
+ncsu_o_vs_unc_d <- create_matchup_table(offense_team_abbr = "NCSU", defense_team_abbr = "UNC")
+unc_o_vs_ncsu_d <- create_matchup_table(offense_team_abbr = "UNC", defense_team_abbr = "NCSU")
 
-syracuse_o_vs_ncsu_d <- create_matchup_table(offense_team_abbr = "SYR", defense_team_abbr = "NCSU")
+ncsu_o_vs_unc_d
 
-ncsu_o_vs_syracuse_d
-
-syracuse_o_vs_ncsu_d
+unc_o_vs_ncsu_d
 
 # save the matchup tables as html files
 #gtsave(ncsu_o_vs_stan_d, filename = "ncsu_o_vs_stan_d.html")
