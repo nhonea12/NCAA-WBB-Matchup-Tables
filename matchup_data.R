@@ -1629,6 +1629,9 @@ ncsu_o_vs_unc_d
 
 unc_o_vs_ncsu_d
 
+create_matchup_table(offense_team_abbr = "NCSU", defense_team_abbr = "WAKE")
+create_matchup_table(offense_team_abbr = "WAKE", defense_team_abbr = "NCSU")
+
 # save the matchup tables as html files
 #gtsave(ncsu_o_vs_stan_d, filename = "ncsu_o_vs_stan_d.html")
 #gtsave(stan_o_vs_ncsu_d, filename = "stan_o_vs_ncsu_d.html")
