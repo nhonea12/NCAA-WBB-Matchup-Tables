@@ -95,7 +95,80 @@ school_ratings <- school_ratings |>
 
 
 
-# now read in shot type and play type stats from Synergy
+# now read in man/zone, shot type, and play type stats from Synergy
+# man/zone
+# read in man offenses
+man_off_raw <- read_csv("Synergy Data/Man vs Zone/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Against Man - Team Offensive.csv", skip = 1)
+
+# read in man defenses
+man_def_raw <- read_csv("Synergy Data/Man vs Zone/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Man Defense - Team Defensive.csv", skip = 1)
+
+# read in zone offenses
+zone_off_raw <- read_csv("Synergy Data/Man vs Zone/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Against Zone - Team Offensive.csv", skip = 1)
+
+# read in zone defenses
+zone_def_raw <- read_csv("Synergy Data/Man vs Zone/Leaderboards - College Women 2025-2026 All excluding Exhibitions - Zone Defense - Team Defensive.csv", skip = 1)
+
+# manipulate man offense to only get variables we want in the format we want
+man_off <- man_off_raw |> 
+  rename(
+    "School" = "Team",
+    "man_off_PPP" = "PPP"
+  ) |> 
+  mutate(
+    man_off_freq = `%Time` / 100
+  ) |> 
+  dplyr::select(
+    School,
+    man_off_freq,
+    man_off_PPP
+  )
+
+# manipulate man defense to only get variables we want in the format we want
+man_def <- man_def_raw |> 
+  rename(
+    "School" = "Team",
+    "man_def_PPP" = "PPP"
+  ) |> 
+  mutate(
+    man_def_freq = `%Time` / 100
+  ) |> 
+  dplyr::select(
+    School,
+    man_def_freq,
+    man_def_PPP
+  )
+
+# manipulate zone offense to only get variables we want in the format we want
+zone_off <- zone_off_raw |> 
+  rename(
+    "School" = "Team",
+    "zone_off_PPP" = "PPP"
+  ) |> 
+  mutate(
+    zone_off_freq = `%Time` / 100
+  ) |> 
+  dplyr::select(
+    School,
+    zone_off_freq,
+    zone_off_PPP
+  )
+
+# manipulate zone defense to only get variables we want in the format we want
+zone_def <- zone_def_raw |> 
+  rename(
+    "School" = "Team",
+    "zone_def_PPP" = "PPP"
+  ) |> 
+  mutate(
+    zone_def_freq = `%Time` / 100
+  ) |> 
+  dplyr::select(
+    School,
+    zone_def_freq,
+    zone_def_PPP
+  )
+
 # shot types
 # read in at rim shots for offenses
 rim_off_raw <- read_csv("Synergy Data/Shot Types/Leaderboards - College Women 2025-2026 All excluding Exhibitions - At Rim - Team Offensive.csv", skip = 1)
@@ -890,7 +963,9 @@ team_aliases <- tribble(
 
 # combine all stats found from Synergy
 # on offense
-synergy_stats_off <- left_join(rim_off, runners_off, by = "School") |> 
+synergy_stats_off <- left_join(man_off, zone_off, by = "School") |> 
+  left_join(rim_off, by = "School") |> 
+  left_join(runners_off, by = "School") |> 
   left_join(hook_off, by = "School") |> 
   left_join(all_jumpers_off, by = "School") |> 
   left_join(isos_off, by = "School") |> 
@@ -902,7 +977,9 @@ synergy_stats_off <- left_join(rim_off, runners_off, by = "School") |>
   left_join(post_up_off, by = "School")
   
 # on defense
-synergy_stats_def <- left_join(rim_def, runners_def, by = "School") |> 
+synergy_stats_def <- left_join(man_def, zone_def, by = "School") |> 
+  left_join(rim_def, by = "School") |> 
+  left_join(runners_def, by = "School") |> 
   left_join(hook_def, by = "School") |> 
   left_join(all_jumpers_def, by = "School") |> 
   left_join(isos_def, by = "School") |> 
@@ -1012,6 +1089,10 @@ lowerbetter <- c("l",
                  "def_EFG_per",
                  "def_FT_rate", 
                  #"opp_pace",
+                 "man_def_PPP",
+                 "zone_def_PPP",
+                 # "man_def_freq",
+                 # "zone_def_freq",
                  "opp_three_FG_per",
                  "opp_rim_FG_per",
                  "opp_short_mid_FG_per",
@@ -1054,13 +1135,17 @@ tmdf <- matchup_stats_wide |>
   mutate(rank = ifelse(name %in% lowerbetter, rank(value, ties.method = "first"), rank(-value, ties.method = "first"))) |> 
   ungroup() |> 
   # classify stats in offense and defense
-  mutate(side = ifelse(grepl("opp_", name) | name %in% c("def_rtg_adj", "DRB_rate", "def_EFG_per", "def_TO_rate", "def_FT_rate"), "Defense", "Offense"), 
+  mutate(side = ifelse(grepl("opp_", name) | name %in% c("def_rtg_adj", "DRB_rate", "def_EFG_per", "def_TO_rate", "def_FT_rate", "man_def_PPP", "man_def_freq", "zone_def_PPP", "zone_def_freq"), "Defense", "Offense"), 
          side = ifelse(name %in% c("W", "L", "conf_W", "conf_L", "net_rtg", "logo", "team", "color", "alternate_color"), "General", side)) |> 
   # assign groups to each stat category
   mutate(stat_group = case_when(
     name %in% c("W", "L", "conf_W", "conf_L", "net_rtg_adj") ~ "General",
     name %in% c("off_rtg_adj", "def_rtg_adj", "EFG_per", "FT_rate", "TO_rate", "ORB_rate", 
                 "opp_EFG_per", "opp_fta_rate", "opp_tov_per", "opp_oreb_per") ~ "Advanced",
+    name %in% c("man_off_PPP", "zone_off_PPP",
+                "man_def_PPP",  "zone_def_PPP") ~ "Man vs. Zone Efficiency",
+    name %in% c("man_off_freq", "zone_off_freq", 
+                "man_def_freq", "zone_def_freq") ~ "Man vs. Zone Frequency",
     name %in% c("tm_rim_FG_per", "tm_short_mid_FG_per", "tm_long_mid_FG_per", "tm_three_FG_per", "tm_runner_FG_per", "tm_hook_FG_per",
                 "opp_rim_FG_per", "opp_short_mid_FG_per", "opp_long_mid_FG_per", "opp_three_FG_per", "opp_runner_FG_per", "opp_hook_FG_per") ~ "Accuracy",
     name %in% c("tm_rim_freq", "tm_short_mid_freq", "tm_long_mid_freq", "tm_three_freq", "tm_runner_freq", "tm_hook_freq",
@@ -1080,25 +1165,35 @@ tmdf
 # a dummy dataframe with clean names for each variable. have to order this correctly
 emptydf <- data.frame(name = c("Offensive Rating", 
                                "eFG%", "FT Rate", "TOV Rate", "OREB Rate", 
+                               "Man Offense", "Zone Offense", 
+                               "Man Offense Rate", "Zone Offense Rate", 
                                  "Rim FG%", "Short Mid. FG%", "Long Mid. FG%", "3P%", "Runner FG%", "Hook Shot FG%", 
                                "Rim Rate", "Short Mid. Rate", "Long Mid. Rate", "Three-Point Rate", "Runner Rate", "Hook Shot Rate", 
                                "Transition", "Isolation", "Pick and Roll", "Spot Up", "Post Up", "Cut",  "Handoff", 
                                "Transitions", "Isolations",  "Pick and Rolls", "Spot Ups", "Post Ups", "Cuts", "Handoffs",   "Pace", 
                                "Defensive Rating", 
                                "eFG% Allowed", "FT Rate Allowed",  "TOV Forced Rate", "DREB Rate", 
+                               "Man Defense", "Zone Defense", 
+                               "Man Defense Rate", "Zone Defense Rate", 
                                 "Rim FG%", "Short Mid. FG%", "Long Mid. FG%", "3P%", "Runner FG%", "Hook Shot FG%", 
                                "Rim Rate", "Short Mid. Rate", "Long Mid. Rate", "Three-Point Rate", "Runner Rate", "Hook Shot Rate", 
                                "Transition", "Isolation", "Pick and Roll", "Spot Up", "Post Up", "Cut",  "Handoff", 
                                "Transitions", "Isolations", "Pick and Rolls", "Spot Ups", "Post Ups", "Cuts", "Handoffs",  "Pace"), 
-                      stat = c("off_rtg_adj", 
+                      stat = c(# offensive stats
+                        "off_rtg_adj", 
                                "EFG_per", "FT_rate", "TO_rate", "ORB_rate", 
+                               "man_off_PPP", "zone_off_PPP", 
+                               "man_off_freq", "zone_off_freq", 
                                  "tm_rim_FG_per", "tm_short_mid_FG_per", "tm_long_mid_FG_per", "tm_three_FG_per", "tm_runner_FG_per", "tm_hook_FG_per",
                                "tm_rim_freq", "tm_short_mid_freq", "tm_long_mid_freq", "tm_three_freq", "tm_runner_freq", "tm_hook_freq",
                                "tm_trans_PPP", "tm_iso_PPP",  "tm_pnr_PPP", "tm_spot_up_PPP", "tm_post_up_PPP", "tm_cut_PPP", "tm_ho_PPP",
                                "tm_trans_freq", "tm_iso_freq",   "tm_pnr_freq",  "tm_spot_up_freq", "tm_post_up_freq", "tm_cut_freq", "tm_ho_freq",
                                "tm_pace", 
+                               # now defensive stats
                                "def_rtg_adj", 
                                "def_EFG_per", "def_FT_rate", "def_TO_rate", "DRB_rate", 
+                              "man_def_PPP", "zone_def_PPP",
+                              "man_def_freq", "zone_def_freq", 
                                  "opp_rim_FG_per", "opp_short_mid_FG_per", "opp_long_mid_FG_per",  "opp_three_FG_per", "opp_runner_FG_per", "opp_hook_FG_per",
                                "opp_rim_freq", "opp_short_mid_freq", "opp_long_mid_freq", "opp_three_freq", "opp_runner_freq", "opp_hook_freq",
                                "opp_trans_PPP", "opp_iso_PPP", "opp_pnr_PPP", "opp_spot_up_PPP", "opp_post_up_PPP", "opp_cut_PPP", "opp_ho_PPP",
@@ -1139,251 +1234,255 @@ gt_rank_coloring <- function(gt_table, column = "rank") {
 
 
 
-tm1 <- "NCSU"
-tm2 <- "STAN"
-
-# select off team name for title
-off_teamname <-  tmdf |> 
-  filter(abbreviation == tm1) |> 
-  select(School) |> 
-  distinct() |> 
-  pull(School)
-
-# select off team record for title
-off_team_record <-  tmdf |> 
-  filter(abbreviation == tm1) |> 
-  filter(stat_group %in% "General") |>
-  select(stat, value, rank) |> 
-  pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
-  mutate(kpistring = paste0(value_W, "-", value_L)) |> 
-  pull(kpistring)
-
-# select off team conference record for title
-off_team_conf_record <-  tmdf |> 
-  filter(abbreviation == tm1) |> 
-  filter(stat_group %in% "General") |>
-  select(stat, value, rank) |> 
-  pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
-  mutate(kpistring = paste0("(", value_conf_W, "-", value_conf_L, ")")) |> 
-  pull(kpistring)
-
-# select off team net rating for title
-off_team_nrtg <-  tmdf |> 
-  filter(abbreviation == tm1) |> 
-  filter(stat_group %in% "General") |>
-  select(stat, value, rank) |> 
-  pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
-  mutate(kpistring = paste0(sprintf("%+.1f", value_net_rtg_adj))) |> 
-  pull(kpistring)
-
-# select off team logo for title
-off_team_logo <- teams |> 
-  filter(abbreviation == tm1) |> 
-  pull(logo)
-
-# select def team name for title
-def_teamname <-  tmdf |> 
-  filter(abbreviation == tm2) |> 
-  select(School) |> 
-  distinct() |> 
-  pull(School)
-
-# select def team record for title
-def_team_record <-  tmdf |> 
-  filter(abbreviation == tm2) |> 
-  filter(stat_group %in% "General") |>
-  select(stat, value, rank) |> 
-  pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
-  mutate(kpistring = paste0(value_W, "-", value_L)) |> 
-  pull(kpistring)
-
-# select def team conference record for title
-# have conference records in reverse for defensive teams to make it work for now
-def_team_conf_record <-  tmdf |> 
-  filter(abbreviation == tm2) |> 
-  filter(stat_group %in% "General") |>
-  select(stat, value, rank) |> 
-  pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
-  mutate(kpistring = paste0("(", value_conf_L, "-", value_conf_W, ")")) |> 
-  pull(kpistring)
-
-# select def team net rating for title
-def_team_nrtg <-  tmdf |> 
-  filter(abbreviation == tm2) |> 
-  filter(stat_group %in% "General") |>
-  select(stat, value, rank) |> 
-  pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
-  mutate(kpistring = paste0(sprintf("%+.1f", value_net_rtg_adj))) |> 
-  pull(kpistring)
-
-# select def team logo for title
-def_team_logo <- teams |> 
-  filter(abbreviation == tm2) |> 
-  pull(logo)
-
-# create subtitle
-gt_title <- md(paste0("<img src='", off_team_logo, "' style='height:35px;'>", off_teamname, " vs. ", def_teamname, "<img src='", def_team_logo, " ' style='height:35px;'>"))
-gt_subtitle <- md(paste0(off_team_record, " ", off_team_conf_record, " (", off_team_nrtg, " Net) · ", def_team_record, " ", def_team_conf_record, " (", def_team_nrtg, " Net)"))
-
-# get df ready for gt table
-gt_df <- emptydf |> 
-  # combine dummy df with the off/def stats of our teams of interest
-  left_join(tmdf |> 
-              filter((abbreviation == tm1 & side == "Offense") | 
-                       (abbreviation == tm2 & side == "Defense")
-              ), 
-            by = c('stat')) |> 
-  # split dataframe in two and bind together
-  split_df_for_gt() |> 
-  # unselect some variables
-  select(-starts_with("side_"), 
-         -starts_with("School_"), 
-         -starts_with("abbreviation_"))
-
-
-
-
-
-
-
-
-
-
-
-# Create gt table
-p <- gt_df |> 
-  gt() |>
-  # Use custom theme
-  gt_theme_savant() |> 
-  
-  # Add our custome title and subtitle
-  tab_header(
-    title = gt_title,
-    subtitle = gt_subtitle
-  ) |>
-  
-  # Add column spanners
-  tab_spanner(columns = c(name_1:rank_1), label = paste0(tm1, " OFFENSE")) |> 
-  tab_spanner(columns = c(name_2:rank_2), label = paste0(tm2, " DEFENSE")) |> 
-  
-  # Hide columns
-  cols_hide(c(starts_with("stat_group"), starts_with("stat_"))) |>
-  
-  # Set column alignment
-  cols_align(starts_with("name_"), align = "left") |> 
-  cols_align(starts_with("rank_"), align = "right") |> 
-  
-  # Set column widths
-  cols_width(
-    starts_with("name_") ~ px(110),
-    starts_with("value") ~ px(70)
-  ) |>
-  
-  # Rename variables
-  cols_label(
-    name_1 = "", 
-    stat_1 = " ", 
-    value_1 = " ", 
-    rank_1 = " ",
-    name_2 = "",
-    stat_2 = " ", 
-    value_2 = " ", 
-    rank_2 = " "
-  ) 
-
-
-p <- p |> 
-  # Add row groups
-  tab_row_group(
-    label = md("**Miscellaneous**"),
-    rows = stat_group_1 == "Misc"
-  ) |> 
-  tab_row_group(
-    label = md("**Playtype Frequency**"),
-    rows = stat_group_1 == "Synergy Freq."
-  ) |> 
-  tab_row_group(
-    label = md("**Playtype Efficiency (PPP)**"),
-    rows = stat_group_1 == "Synergy Eff."
-  ) |> 
-  tab_row_group(
-    label = md("**Shooting Frequency**"),
-    rows = stat_group_1 == "Frequency"
-  ) |> 
-  tab_row_group(
-    label = md("**Shooting Efficiency**"),
-    rows = stat_group_1 == "Accuracy"
-  ) |>
-  tab_row_group(
-    label = md("**Advanced**"),
-    rows = stat_group_1 == "Advanced"
-  ) |>
-  
-  # Apply red/green rank coloring
-  gt_rank_coloring(column = starts_with("rank_")) |> 
-  
-  # Apply gray coloring for non judgemental ranks
-  data_color(
-    columns = starts_with("rank_"),
-    rows = name_1 %in% c(
-      "Isolations", "Handoffs", "Pick and Rolls", "Spot Ups", 
-      "Postups", "Transitions", "Cuts", "Post Ups", "Pace",
-      "Rim Rate", "Short Mid. Rate", "Long Mid. Rate", "Three-Point Rate", "Runner Rate", "Hook Shot Rate"
-    ),
-    alpha = 1,
-    reverse = T,
-    domain = c(1, 363),
-    palette = "ggthemes::excel_Grayscale"
-  ) |> 
-  
-  # add suffix to rank columns
-  fmt(
-    columns = starts_with("rank"),
-    fns = function(x) tolower(append_suffix(x))
-  )
-
-p <- p |> 
-  # Format percentage columns
-  fmt_percent(
-    columns = starts_with("value_"), 
-    rows = c(name_1 %in% c(
-      "eFG%", "FT Rate", "TOV Rate", "OREB Rate", "3P%", 
-      "Rim FG%", "Short Mid. FG%", "Long Mid. FG%", "Runner FG%", "Hook Shot FG%", "Rim Rate", "Short Mid. Rate", "Long Mid. Rate", "Three-Point Rate", "Runner Rate", "Hook Shot Rate", 
-      "Isolations", "Handoffs", "Pick and Rolls", "Spot Ups", 
-      "Postups", "Cuts", "Transitions", "Post Ups"
-    )), 
-    decimals = 1
-  ) |> 
-  
-  # Format numeric columns
-  fmt_number(
-    columns = starts_with("value_"), 
-    rows = c(name_1 %in% c(
-      "Isolation", "Handoff", "Pick and Roll", "Spot Up", 
-      "Postup", "Cut", "Transition", "Post Up"
-    )), 
-    decimals = 2
-  ) |> 
-  fmt_number(
-    columns = starts_with("value_"), 
-    rows = c(name_1 %in% c("Offensive Rating", "Pace")), 
-    decimals = 1
-  ) |> 
-  
-  # Style row groups
-  tab_style(
-    locations = cells_row_groups(),
-    style = cell_text(size = px(13))
-  ) |>
-  
-  # Set table options
-  tab_options(
-    row_group.border.bottom.width = px(2), 
-    row_group.padding = ".5px",
-    row_group.border.top.style = "solid"
-  ) 
-
-p
+# tm1 <- "NCSU"
+# tm2 <- "STAN"
+# 
+# # select off team name for title
+# off_teamname <-  tmdf |> 
+#   filter(abbreviation == tm1) |> 
+#   select(School) |> 
+#   distinct() |> 
+#   pull(School)
+# 
+# # select off team record for title
+# off_team_record <-  tmdf |> 
+#   filter(abbreviation == tm1) |> 
+#   filter(stat_group %in% "General") |>
+#   select(stat, value, rank) |> 
+#   pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
+#   mutate(kpistring = paste0(value_W, "-", value_L)) |> 
+#   pull(kpistring)
+# 
+# # select off team conference record for title
+# off_team_conf_record <-  tmdf |> 
+#   filter(abbreviation == tm1) |> 
+#   filter(stat_group %in% "General") |>
+#   select(stat, value, rank) |> 
+#   pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
+#   mutate(kpistring = paste0("(", value_conf_W, "-", value_conf_L, ")")) |> 
+#   pull(kpistring)
+# 
+# # select off team net rating for title
+# off_team_nrtg <-  tmdf |> 
+#   filter(abbreviation == tm1) |> 
+#   filter(stat_group %in% "General") |>
+#   select(stat, value, rank) |> 
+#   pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
+#   mutate(kpistring = paste0(sprintf("%+.1f", value_net_rtg_adj))) |> 
+#   pull(kpistring)
+# 
+# # select off team logo for title
+# off_team_logo <- teams |> 
+#   filter(abbreviation == tm1) |> 
+#   pull(logo)
+# 
+# # select def team name for title
+# def_teamname <-  tmdf |> 
+#   filter(abbreviation == tm2) |> 
+#   select(School) |> 
+#   distinct() |> 
+#   pull(School)
+# 
+# # select def team record for title
+# def_team_record <-  tmdf |> 
+#   filter(abbreviation == tm2) |> 
+#   filter(stat_group %in% "General") |>
+#   select(stat, value, rank) |> 
+#   pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
+#   mutate(kpistring = paste0(value_W, "-", value_L)) |> 
+#   pull(kpistring)
+# 
+# # select def team conference record for title
+# # have conference records in reverse for defensive teams to make it work for now
+# def_team_conf_record <-  tmdf |> 
+#   filter(abbreviation == tm2) |> 
+#   filter(stat_group %in% "General") |>
+#   select(stat, value, rank) |> 
+#   pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
+#   mutate(kpistring = paste0("(", value_conf_L, "-", value_conf_W, ")")) |> 
+#   pull(kpistring)
+# 
+# # select def team net rating for title
+# def_team_nrtg <-  tmdf |> 
+#   filter(abbreviation == tm2) |> 
+#   filter(stat_group %in% "General") |>
+#   select(stat, value, rank) |> 
+#   pivot_wider(names_from = stat, values_from = c("value", "rank")) |> 
+#   mutate(kpistring = paste0(sprintf("%+.1f", value_net_rtg_adj))) |> 
+#   pull(kpistring)
+# 
+# # select def team logo for title
+# def_team_logo <- teams |> 
+#   filter(abbreviation == tm2) |> 
+#   pull(logo)
+# 
+# # create subtitle
+# gt_title <- md(paste0("<img src='", off_team_logo, "' style='height:35px;'>", off_teamname, " vs. ", def_teamname, "<img src='", def_team_logo, " ' style='height:35px;'>"))
+# gt_subtitle <- md(paste0(off_team_record, " ", off_team_conf_record, " (", off_team_nrtg, " Net) · ", def_team_record, " ", def_team_conf_record, " (", def_team_nrtg, " Net)"))
+# 
+# # get df ready for gt table
+# gt_df <- emptydf |> 
+#   # combine dummy df with the off/def stats of our teams of interest
+#   left_join(tmdf |> 
+#               filter((abbreviation == tm1 & side == "Offense") | 
+#                        (abbreviation == tm2 & side == "Defense")
+#               ), 
+#             by = c('stat')) |> 
+#   # split dataframe in two and bind together
+#   split_df_for_gt() |> 
+#   # unselect some variables
+#   select(-starts_with("side_"), 
+#          -starts_with("School_"), 
+#          -starts_with("abbreviation_"))
+# 
+# 
+# 
+# # Create gt table
+# p <- gt_df |> 
+#   gt() |>
+#   # Use custom theme
+#   gt_theme_savant() |> 
+#   
+#   # Add our custome title and subtitle
+#   tab_header(
+#     title = gt_title,
+#     subtitle = gt_subtitle
+#   ) |>
+#   
+#   # Add column spanners
+#   tab_spanner(columns = c(name_1:rank_1), label = paste0(tm1, " OFFENSE")) |> 
+#   tab_spanner(columns = c(name_2:rank_2), label = paste0(tm2, " DEFENSE")) |> 
+#   
+#   # Hide columns
+#   cols_hide(c(starts_with("stat_group"), starts_with("stat_"))) |>
+#   
+#   # Set column alignment
+#   cols_align(starts_with("name_"), align = "left") |> 
+#   cols_align(starts_with("rank_"), align = "right") |> 
+#   
+#   # Set column widths
+#   cols_width(
+#     starts_with("name_") ~ px(110),
+#     starts_with("value") ~ px(70)
+#   ) |>
+#   
+#   # Rename variables
+#   cols_label(
+#     name_1 = "", 
+#     stat_1 = " ", 
+#     value_1 = " ", 
+#     rank_1 = " ",
+#     name_2 = "",
+#     stat_2 = " ", 
+#     value_2 = " ", 
+#     rank_2 = " "
+#   ) 
+# 
+# 
+# p <- p |> 
+#   # Add row groups
+#   tab_row_group(
+#     label = md("**Miscellaneous**"),
+#     rows = stat_group_1 == "Misc"
+#   ) |> 
+#   tab_row_group(
+#     label = md("**Playtype Frequency**"),
+#     rows = stat_group_1 == "Synergy Freq."
+#   ) |> 
+#   tab_row_group(
+#     label = md("**Playtype Efficiency (PPP)**"),
+#     rows = stat_group_1 == "Synergy Eff."
+#   ) |> 
+#   tab_row_group(
+#     label = md("**Shooting Frequency**"),
+#     rows = stat_group_1 == "Frequency"
+#   ) |> 
+#   tab_row_group(
+#     label = md("**Shooting Efficiency**"),
+#     rows = stat_group_1 == "Accuracy"
+#   ) |>
+#   tab_row_group(
+#     label = md("**Man vs. Zone Frequency**"),
+#     rows = stat_group_1 == "Man/Zone Frequency"
+#   ) |>
+#   tab_row_group(
+#     label = md("**Man vs. Zone Efficiency**"),
+#     rows = stat_group_1 == "Man/Zone Efficiency"
+#   ) |>
+#   tab_row_group(
+#     label = md("**Advanced**"),
+#     rows = stat_group_1 == "Advanced"
+#   ) |>
+#   
+#   # Apply red/green rank coloring
+#   gt_rank_coloring(column = starts_with("rank_")) |> 
+#   
+#   # Apply gray coloring for non judgemental ranks
+#   data_color(
+#     columns = starts_with("rank_"),
+#     rows = name_1 %in% c(
+#       "Man Offense Rate", "Zone Offense Rate", "Man Defense Rate", "Zone Defense Rate", 
+#       "Isolations", "Handoffs", "Pick and Rolls", "Spot Ups", 
+#       "Postups", "Transitions", "Cuts", "Post Ups", "Pace",
+#       "Rim Rate", "Short Mid. Rate", "Long Mid. Rate", "Three-Point Rate", "Runner Rate", "Hook Shot Rate"
+#     ),
+#     alpha = 1,
+#     reverse = T,
+#     domain = c(1, 363),
+#     palette = "ggthemes::excel_Grayscale"
+#   ) |> 
+#   
+#   # add suffix to rank columns
+#   fmt(
+#     columns = starts_with("rank"),
+#     fns = function(x) tolower(append_suffix(x))
+#   )
+# 
+# p <- p |> 
+#   # Format percentage columns
+#   fmt_percent(
+#     columns = starts_with("value_"), 
+#     rows = c(name_1 %in% c(
+#       "eFG%", "FT Rate", "TOV Rate", "OREB Rate", 
+#       "Man Offense Rate", "Zone Offense Rate", "Man Defense Rate", "Zone Defense Rate", 
+#       "3P%", 
+#       "Rim FG%", "Short Mid. FG%", "Long Mid. FG%", "Runner FG%", "Hook Shot FG%", "Rim Rate", "Short Mid. Rate", "Long Mid. Rate", "Three-Point Rate", "Runner Rate", "Hook Shot Rate", 
+#       "Isolations", "Handoffs", "Pick and Rolls", "Spot Ups", 
+#       "Postups", "Cuts", "Transitions", "Post Ups"
+#     )), 
+#     decimals = 1
+#   ) |> 
+#   
+#   # Format numeric columns
+#   fmt_number(
+#     columns = starts_with("value_"), 
+#     rows = c(name_1 %in% c(
+#       "Man Offense", "Zone Offense", "Man Defense", "Zone Defense", 
+#       "Isolation", "Handoff", "Pick and Roll", "Spot Up", 
+#       "Postup", "Cut", "Transition", "Post Up"
+#     )), 
+#     decimals = 2
+#   ) |> 
+#   fmt_number(
+#     columns = starts_with("value_"), 
+#     rows = c(name_1 %in% c("Offensive Rating", "Pace")), 
+#     decimals = 1
+#   ) |> 
+#   
+#   # Style row groups
+#   tab_style(
+#     locations = cells_row_groups(),
+#     style = cell_text(size = px(13))
+#   ) |>
+#   
+#   # Set table options
+#   tab_options(
+#     row_group.border.bottom.width = px(2), 
+#     row_group.padding = ".5px",
+#     row_group.border.top.style = "solid"
+#   ) 
+# 
+# p
 
 
 
@@ -1491,7 +1590,7 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
     # Use custom theme
     gt_theme_savant() |> 
     
-    # Add our custome title and subtitle
+    # Add our custom title and subtitle
     tab_header(
       title = gt_title,
       subtitle = gt_subtitle
@@ -1550,6 +1649,14 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
       rows = stat_group_1 == "Accuracy"
     ) |>
     tab_row_group(
+      label = md("**Man/Zone Frequency**"),
+      rows = stat_group_1 == "Man vs. Zone Frequency"
+    ) |>
+    tab_row_group(
+      label = md("**Man/Zone Efficiency**"),
+      rows = stat_group_1 == "Man vs. Zone Efficiency"
+    ) |>
+    tab_row_group(
       label = md("**Advanced**"),
       rows = stat_group_1 == "Advanced"
     ) |>
@@ -1561,6 +1668,7 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
     data_color(
       columns = starts_with("rank_"),
       rows = name_1 %in% c(
+        "Man Offense Rate", "Zone Offense Rate", "Man Defense Rate", "Zone Defense Rate", 
         "Isolations", "Handoffs", "Pick and Rolls", "Spot Ups", 
         "Postups", "Transitions", "Cuts", "Post Ups", "Pace",
         "Rim Rate", "Short Mid. Rate", "Long Mid. Rate", "Three-Point Rate", "Runner Rate", "Hook Shot Rate"
@@ -1582,7 +1690,9 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
     fmt_percent(
       columns = starts_with("value_"), 
       rows = c(name_1 %in% c(
-        "eFG%", "FT Rate", "TOV Rate", "OREB Rate", "3P%", 
+        "eFG%", "FT Rate", "TOV Rate", "OREB Rate", 
+        "Man Offense Rate", "Zone Offense Rate", "Man Defense Rate", "Zone Defense Rate", 
+        "3P%", 
         "Rim FG%", "Short Mid. FG%", "Long Mid. FG%", "Runner FG%", "Hook Shot FG%", "Rim Rate", "Short Mid. Rate", "Long Mid. Rate", "Three-Point Rate", "Runner Rate", "Hook Shot Rate", 
         "Isolations", "Handoffs", "Pick and Rolls", "Spot Ups", 
         "Postups", "Cuts", "Transitions", "Post Ups"
@@ -1594,6 +1704,7 @@ create_matchup_table <- function(offense_team_abbr, defense_team_abbr){
     fmt_number(
       columns = starts_with("value_"), 
       rows = c(name_1 %in% c(
+        "Man Offense", "Zone Offense", "Man Defense", "Zone Defense", 
         "Isolation", "Handoff", "Pick and Roll", "Spot Up", 
         "Postup", "Cut", "Transition", "Post Up"
       )), 
@@ -1629,9 +1740,9 @@ ncsu_o_vs_unc_d
 
 unc_o_vs_ncsu_d
 
-create_matchup_table(offense_team_abbr = "NCSU", defense_team_abbr = "WAKE")
-create_matchup_table(offense_team_abbr = "WAKE", defense_team_abbr = "NCSU")
+create_matchup_table(offense_team_abbr = "NCSU", defense_team_abbr = "ND")
+create_matchup_table(offense_team_abbr = "ND", defense_team_abbr = "NCSU")
 
 # save the matchup tables as html files
-#gtsave(ncsu_o_vs_stan_d, filename = "ncsu_o_vs_stan_d.html")
-#gtsave(stan_o_vs_ncsu_d, filename = "stan_o_vs_ncsu_d.html")
+gtsave(create_matchup_table(offense_team_abbr = "NCSU", defense_team_abbr = "DUKE"), filename = "ncsu_o_vs_duke_d.html")
+gtsave(create_matchup_table(offense_team_abbr = "DUKE", defense_team_abbr = "NCSU"), filename = "duke_o_vs_ncsu_d.html")
